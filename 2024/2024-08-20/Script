@@ -6,3 +6,92 @@ library(tidytuesdayR)
 tuesdata <- tidytuesdayR::tt_load('2024-08-20')
 
 ```
+
+```{r}
+
+english_monarchs_marriages_df <-
+  tuesdata$english_monarchs_marriages_df |> 
+  mutate(
+    king_age = as.numeric(str_match(king_age, "\\d+")), 
+    consort_age = as.numeric(str_match(consort_age, "\\d+")), 
+    year_of_marriage = as.numeric(str_match(year_of_marriage, "\\d+")), 
+    difference_in_years = abs(king_age - consort_age)
+  )
+
+```
+
+```{r}
+ggplot(
+  english_monarchs_marriages_df, 
+  aes(year_of_marriage, difference_in_years)
+) +
+  geom_point() +
+  geom_point(
+    data = subset(
+      english_monarchs_marriages_df, 
+      difference_in_years == 0 | difference_in_years == 40
+    ),
+    color = "red", 
+    size = 4, 
+    shape = 1
+  ) +
+  annotate(
+    "text",
+    x = 1300, 
+    y = 39, 
+    label = "Edward I & Margaret of France \nhave 40 years difference", 
+    vjust = 1, 
+    size = 3, 
+    color = "gray40"
+  ) +
+  annotate(
+    "text",
+    x = 1700, 
+    y = 4, 
+    label = "George II & Caroline of Ansbach\nwere both 22 years old", 
+    vjust = 1, 
+    size = 3, 
+    color = "gray40"
+  ) +
+  annotate(
+    "text",
+    x = 1810, 
+    y = 13, 
+    label = "Victoria & Albert of Saxe-Coburg and Gotha\nwere both 21 years old", 
+    vjust = 1, 
+    size = 3, 
+    color = "gray40"
+  ) +
+  annotate(
+    "curve", 
+    x = 1805, 
+    y = 10, 
+    xend = 1820, 
+    yend = 0.5,
+    arrow = arrow(length = unit(0.2, "cm"), type = "open"),
+    color = "gray60"
+  ) +
+  labs(
+    x = "Year of marriage", 
+    y = "Difference in age", 
+    title = "English Monarchs and Marriages",
+    subtitle = "Victoria & Albert of Saxe-Coburg and Gotha, and George II & Caroline of Ansbach were the only spouces of same age. \nAge differences between English monarchs and their consorts vary up to 40 years, with the most notable being Edward I and Margaret of France. \nShe was 20 and he was 60 when they got married.",
+    caption = "source: Data scraped from Ian Visits by f. hull"
+  ) +
+  theme_minimal(base_family = "Times New Roman") +
+  theme(
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
+    panel.grid.major = element_line(color = "gray90", size = 0.2),
+    panel.grid.minor = element_line(color = "white", size = 0.1),
+    axis.text = element_text(color = "gray70"),
+    axis.title = element_text(color = "gray"),
+    plot.title = element_text(color = "black", size = 14, face = "bold", margin = margin(b = 10, t = 10)),
+    plot.subtitle = element_text(color = "gray30", size = 10, margin = margin(b = 20)),
+     plot.caption = element_text(color = "gray", size = 8, margin = margin(b = 10, t = 10)),
+    axis.text.x = element_text(angle = 45, hjust = 1, color = "gray50"),
+    axis.text.y = element_text(color = "gray50"),
+    plot.margin = margin(t = 10, r = 30, b = 10, l = 10)
+  )
+
+```

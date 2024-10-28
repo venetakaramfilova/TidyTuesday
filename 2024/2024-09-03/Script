@@ -1,0 +1,167 @@
+library(tidyverse)
+library(tidytuesdayR)
+library(paletteer)
+
+tuesdata <- tidytuesdayR::tt_load("2024-09-03")
+
+qname_levels_single_response_crosswalk <-
+  tuesdata$qname_levels_single_response_crosswalk
+
+stackoverflow_survey_questions <- 
+  tuesdata$stackoverflow_survey_questions
+
+stackoverflow_survey_single_response <-
+  tuesdata$stackoverflow_survey_single_response
+
+
+# Filtering only responses of "Data scientist or machine learning specialist"
+
+data_scientists_ml <-
+  stackoverflow_survey_single_response |> 
+  filter(dev_type == 6)
+
+age_level <-
+  qname_levels_single_response_crosswalk |> 
+  filter(qname == "age")
+
+ai_acc_level <-
+  qname_levels_single_response_crosswalk |> 
+  filter(qname == "ai_acc")
+
+ai_complex_level <-
+  qname_levels_single_response_crosswalk |> 
+  filter(qname == "ai_complex")
+
+org_size_level <-
+  qname_levels_single_response_crosswalk |> 
+  filter(qname == "org_size")
+
+ai_select_level <-
+  qname_levels_single_response_crosswalk |> 
+  filter(qname == "ai_select")
+
+
+
+ai_data <-
+  data_scientists_ml |> 
+  select(age, years_code_pro, ai_acc, ai_complex, org_size, ai_select) |> 
+  left_join(
+    age_level, 
+    by = c("age" = "level")
+  ) |> 
+  mutate(age = label) |> 
+  left_join(
+    ai_acc_level,
+    by = c("ai_acc" = "level")
+  ) |> 
+  mutate(ai_acc = label.y) |> 
+  select(-(ends_with(".x") | ends_with(".y"))) |>
+  left_join(
+    ai_complex_level,
+    by = c("ai_complex" = "level")
+  ) |> 
+  mutate(ai_complex = label) |>
+  select(-qname, -label) |>
+  left_join(
+    org_size_level,
+    by = c("org_size" = "level")
+  ) |> 
+  mutate(org_size = label)|>
+  select(-qname, -label) |> 
+  left_join(
+    ai_select_level,
+    by = c("ai_select" = "level")
+  ) |> 
+  mutate(ai_select = label) |> 
+  select(-qname, -label)
+
+
+ai_related <-
+  ai_data |> 
+  mutate(
+    age = str_remove(age, " years old"),
+    age = str_replace(age, "65 years or older", "65+"), 
+    age = factor(
+      age, 
+      levels = c(
+        "Under 18", 
+        "18-24", 
+        "25-34", 
+        "35-44", 
+        "45-54", 
+        "65+", 
+        "Prefer not to say"
+      )
+    ), 
+    age = replace_na(age, "Prefer not to say"), 
+    ai_acc = factor(
+      ai_acc,
+      levels = c(
+        "Highly trust",
+        "Somewhat trust",
+        "Neither trust nor distrust",
+        "Somewhat distrust",
+        "Highly distrust"
+      )
+    ),
+    ai_complex = factor(
+      ai_complex,
+      levels = c(
+        "Very well at handling complex tasks",
+        "Good, but not great at handling complex tasks",
+        "Neither good or bad at handling complex tasks",
+        "Bad at handling complex tasks",
+        "Very poor at handling complex tasks"
+      )
+    ),
+    org_size = factor(
+      org_size,
+      levels = c(
+        "Just me - I am a freelancer, sole proprietor, etc.",
+        "2 to 9 employees",
+        "10 to 19 employees",
+        "20 to 99 employees",
+        "100 to 499 employees",
+        "500 to 999 employees",
+        "1,000 to 4,999 employees",
+        "5,000 to 9,999 employees",
+        "10,000 or more employees",
+        "I don’t know"
+      )
+    ), 
+    org_size = replace_na(org_size, "I don’t know")
+  ) |> 
+  filter(ai_select != is.na(ai_select)) |> 
+  filter(ai_complex != is.na(ai_complex))
+
+
+ggplot(
+  ai_related,
+  aes(age, fill = ai_complex)
+) +
+  geom_bar() +
+  facet_grid(ai_acc ~ .) +
+  labs(
+    x = "", 
+    y = "", 
+    title = "2024 Stack Overflow Annual Developer Survey", 
+    subtitle = str_wrap('The majority of respondents, who would describe their current job as "Data scientist or machine learning specialists", tend not to be very extreme regarding the trustworthiness of the AI tools, they use in their development process.'), 
+    caption = "Source: 2024 Stack Overflow Annual Developer Survey | Curated by: Havisha Khurana | Graph: Veneta Karamfilova", 
+    fill = "Can AI tools handle complex tasks"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.background = element_rect(fill = "white", color = NA),
+    panel.background = element_rect(fill = "white", color = NA),
+    panel.grid.major = element_line(color = "gray90", size = 0.2),
+    panel.grid.minor = element_line(color = "white", size = 0.1),
+    axis.text = element_text(color = "gray70"),
+    axis.title = element_text(color = "gray"),
+    plot.title = element_text(color = "black", size = 14, face = "bold", margin = margin(b = 10, t = 20)),
+    plot.subtitle = element_text(color = "gray30", size = 10, margin = margin(b = 20)),
+    plot.caption = element_text(color = "gray", size = 8, margin = margin(b = 10, t = 10)),
+    axis.text.x = element_text(color = "gray50"),
+    axis.text.y = element_text(color = "gray50"),
+    plot.margin = margin(t = 10, r = 30, b = 10, l = 10)
+  ) +
+  scale_fill_paletteer_d("MoMAColors::Althoff")

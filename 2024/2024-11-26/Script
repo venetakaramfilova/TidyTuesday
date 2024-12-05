@@ -1,1 +1,160 @@
-m
+U.S. Customs and Border Protection Encounters
+
+```{r}
+# load-packages
+
+library(tidyverse)
+library(scales)
+library(paletteer)
+```
+
+```{r}
+# download-data
+
+cbp_resp <- 
+    readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2024/2024-11-26/cbp_resp.csv')
+
+cbp_state <- 
+    readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2024/2024-11-26/cbp_state.csv')
+
+```
+
+In the United States, the federal government's fiscal year starts on October 1st and ends on September 30th of the following year. For example, Fiscal Year 2024 (FY 2024) would start on October 1, 2023, and end on September 30, 2024.
+
+```{r}
+cbp_state <- 
+  cbp_state |>
+  mutate(
+    month = match(tolower(month_abbv), tolower(month.abb)),
+    demographic = case_when(
+      demographic == "UC / Single Minors" ~ "Single Minors", 
+      demographic == "FMUA" ~ "Individual in a Family Unit",
+      TRUE ~ demographic
+    ), 
+    calendar_year = if_else(month >= 10, fiscal_year - 1, fiscal_year), 
+    year_month = make_date(calendar_year, month, 1)
+  ) |>
+  filter(calendar_year > 2019) # only 3 months for 2019
+  
+```
+
+The plot below illustrates the number of encounters by country of origin and highlights the changes in encounter counts over the years, categorized by the demographic characteristics of individuals.
+
+```{r}
+
+# encounters by demographic and citizenship
+
+ggplot(
+  cbp_state, 
+  aes(x = calendar_year, y = encounter_count, fill = demographic)
+) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_y_continuous(labels = comma) +
+  facet_wrap( ~ citizenship, nrow = 4) +
+  scale_fill_paletteer_d(
+    "MoMAColors::Althoff", 
+    labels = c(
+      "Accompanied Minors" = bquote("Accompanied Minors"^2), 
+      "Family members" = bquote("Individual in a Family Unit"^3),
+      "Single Adults" = "Single Adults", 
+      "Single Minors" = "Single Minors"
+    )
+  ) +
+  labs(
+    x = "", 
+    y = "", 
+    title = bquote(
+      "U.S. Customs and Border Protection Encounters"^1
+    ), 
+    subtitle = "The plot below illustrates the number of encounters by country of origin and highlights the changes in encounter counts over the years, categorized by the demographic characteristics of individuals.",
+    caption = "1: January 2020 - September 2024\n\n2: Accompanied Minor represents a child accompanied by a parent or legal guardian and the parent or legal guardian is either a U.S. Citizen, Lawful Permanent Resident, or admissible noncitizen, and the child is determined to be inadmissible.\n\n3: Individual in a Family Unit represents the number of encountered individuals within the family unit, not the number of units. A Family Unit is defined as a least one noncitizen minor child and at least one noncitizen adult parent or legal guardian. 
+For example, a family unit consisting of two or more individuals is encountered. The data would show two or more individuals, not one family unit. Beginning in March 2020, 'Individual in a Family Unit' data also includes Title 42 Expulsions of a family 
+group of at least one child and one related adult (regardless of whether the adult and child met the definition of a family unit).\n\n\nSource: U.S. Customs and Border Protection (CBP) encounter data, via Tony Galván | Plot: Veneta Karamfilova",
+    fill = ""
+  ) +
+  theme(
+    plot.title = element_text(
+      color = "gray30", 
+      size = 18, 
+      face = "bold", 
+      margin = margin(b = 10, t = 20, r = 10)
+    ),
+    plot.subtitle = element_text(
+      color = "gray30", 
+      size = 12, 
+      margin = margin(b = 20)
+    ),
+    plot.caption = element_text(
+      color = "gray50", 
+      size = 10, 
+      margin = margin(b = 10, t = 20), 
+      hjust = 0
+    ),
+    plot.margin = margin(t = 1, b = 7, l = 15, r = 25), 
+    legend.position = c(0.89, 0.08) # x, y coordinates
+  ) 
+
+```
+
+```{r}
+# filter only for children
+
+cbp_state_children <-
+  cbp_state |> 
+  filter(demographic == "Accompanied Minors" | demographic == "Single Minors")
+```
+
+The plot below illustrates the number of encounters by country of origin and highlights the changes in encounter counts over the years, focusing only on minors.
+
+```{r plot encounters minors, fig.width=8, fig.height=6, out.width='100%', out.height='auto'}
+
+#| label: plot unaccompanied children by country
+#| message: false
+
+ggplot(
+  cbp_state_children, 
+  aes(calendar_year, encounter_count, fill = demographic)
+) +
+  geom_col() +
+  facet_wrap( ~ citizenship, scales = "free", nrow = 4) +
+  scale_fill_paletteer_d(
+    "MoMAColors::Althoff", 
+    labels = c(
+      "Accompanied Minors" = bquote("Accompanied Minors"^2), 
+      "Single Minors" = "Single Minors"
+    )
+  ) +
+  labs(
+    x = "", 
+    y = "", 
+    title = bquote(
+      "U.S. Customs and Border Protection Encounters of Minors"^1
+    ), 
+    subtitle =
+      "The plot below illustrates the number of encounters by country of origin and highlights the changes in encounter counts over the years, focusing only on minors.",
+    caption = "1: January 2020 - September 2024\n\n2: Accompanied Minor represents a child accompanied by a parent or legal guardian and the parent or legal guardian is either a U.S. Citizen, Lawful Permanent Resident, or admissible noncitizen, and the child is determined to be inadmissible.\n\n\nSource: U.S. Customs and Border Protection (CBP) encounter data, via Tony Galván | Plot: Veneta Karamfilova",
+    fill = ""
+  ) +
+  theme(
+    plot.title = element_text(
+      color = "gray30", 
+      size = 18, 
+      face = "bold", 
+      margin = margin(b = 10, t = 20, r = 10)
+    ),
+    plot.subtitle = element_text(
+      color = "gray30",
+      size = 12,
+      margin = margin(b = 20)
+    ),
+    plot.caption = element_text(
+      color = "gray50", 
+      size = 10, 
+      margin = margin(b = 10, t = 10), 
+      hjust = 0
+    ),
+    plot.margin = margin(t = 1, b = 7, l = 15, r = 25), 
+    legend.position = c(0.91, 0.05) # x, y coordinates
+  )
+
+```

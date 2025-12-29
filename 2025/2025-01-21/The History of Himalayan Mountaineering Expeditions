@@ -1,1 +1,74 @@
+```{r}
+# load-packages
 
+library(tidyverse)
+library(tidytuesdayR)
+library(ggtext)
+library(paletteer)
+```
+
+```{r}
+# download-data
+
+tuesdata <- tidytuesdayR::tt_load('2025-01-21')
+
+exped_tidy <- tuesdata$exped_tidy
+peaks_tidy <- tuesdata$peaks_tidy
+```
+
+```{r}
+mnt_range_cl_uncl <- 
+  peaks_tidy |>
+  count(HIMAL_FACTOR, PSTATUS_FACTOR) |>
+  pivot_wider(
+    names_from = PSTATUS_FACTOR, 
+    values_from = n, 
+    values_fill = 0
+  ) |>
+  arrange(Unclimbed) |>
+  mutate(HIMAL_FACTOR = fct_inorder(HIMAL_FACTOR))
+```
+
+```{r}
+himalayan <- 
+  ggplot(mnt_range_cl_uncl) +
+    geom_segment(
+      aes(
+        x = HIMAL_FACTOR, 
+        xend = HIMAL_FACTOR, 
+        y = Unclimbed, 
+        yend = Climbed
+      ), 
+    color="grey40") +
+    geom_point(
+      aes(HIMAL_FACTOR, Unclimbed), color = "#DF7E66FF", size = 3) +
+    geom_point(
+      aes(HIMAL_FACTOR, Climbed), color = "#94B594FF", size = 3) +
+    coord_flip() + 
+      labs(
+      x = "", 
+      y = "", 
+      title = str_wrap("Climbing status across Himalayan ranges"),
+      subtitle = str_wrap(
+        "The Kanti/Palchung Himal has the highest concentration of <span style='color:#DF7E66FF'>**unclimbed**</span> peaks among Nepal's Himalayan sub-ranges - 14. Khumbu Himalaya has the most <span style='color:#94B594FF'>**climbed**</span> peaks - 67."
+      ), 
+      caption = "Source: Himalayan Dataset, curated by Nicolas Foss, Ed.D., MS | viz: Veneta Karamfilova"
+    ) +
+    theme_minimal() +
+    theme(
+      plot.background = element_rect(fill = "white", color = NA),
+      panel.background = element_rect(fill = "white", color = NA),
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank(),
+      axis.text = element_text(color = "gray70"),
+      axis.title = element_text(color = "gray"),
+      plot.title = element_text(color = "black", size = 14, face = "bold", margin = margin(b = 10, t = 20)),
+      plot.subtitle = element_markdown(color = "gray30", size = 10, margin = margin(b = 20)),
+      plot.caption = element_text(color = "gray50", size = 8, margin = margin(b = 10, t = 10)),
+      axis.text.x = element_text(color = "gray50"),
+      axis.text.y = element_text(color = "gray50"),
+      plot.margin = margin(t = 10, r = 30, b = 10, l = 10)
+    )
+
+ggsave("Himalayan.png", himalayan, width = 14, height = 10, dpi = 300)
+```

@@ -27,6 +27,16 @@ mnt_range_cl_uncl <-
   ) |>
   arrange(Unclimbed) |>
   mutate(HIMAL_FACTOR = fct_inorder(HIMAL_FACTOR))
+
+mnt_peak_cl_uncl <-
+    peaks_tidy |>
+  count(HIMAL_FACTOR, PKNAME, PSTATUS_FACTOR) |>
+  pivot_wider(
+    names_from = PSTATUS_FACTOR, 
+    values_from = n, 
+    values_fill = 0
+  )
+
 ```
 
 ```{r}

@@ -158,5 +158,6 @@ cappuccino_plot <-
     ),
     plot.margin = margin(20, 20, 40, 20)
   )
+cappuccino_plot
 ```
 

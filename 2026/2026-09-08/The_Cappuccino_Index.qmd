@@ -1,0 +1,162 @@
+---
+title: "The Cappuccino Index"
+format: html
+editor: visual
+---
+
+Libraries
+
+```{r}
+#| label: load-packages
+#| message: false
+
+library(tidyverse)
+library(ggimage)
+```
+
+### This dataset is part of the weekly [#TidyTuesday](https://github.com/rfordatascience/tidytuesday/blob/main/data/2026/2026-09-08/readme.md).
+
+```{r}
+#| label: download-data
+
+cafe <- 
+  read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2026/2026-09-08/cafe.csv')
+
+cappuccino_index <- 
+  read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2026/2026-09-08/cappuccino_index.csv')
+
+```
+
+## **Data Dictionary**
+
+### **`cafe.csv`**
+
+| **variable** | **class** | **description** |
+|------------------|------------------|-----------------------------------|
+| country | character | The country of the cafe. |
+| city | character | The city of the cafe. |
+| urban | logical | Whether the cafe is in an urban area. |
+| suburban | logical | Whether the cafe is in a suburban area. |
+| rural | logical | Whether the cafe is in a rural area. |
+| hourly_wage_gbp | double | The hourly wage of a barista working in the cafe, converted to British pounds. |
+| price_gbp | double | The price of a small cappuccino from the cafe, converted to British pounds. |
+| original_currency | character | The original currency used by the cafe. |
+| price | double | The price of a small cappuccino from the cafe, in the original currency. |
+| hourly_wage | double | The hourly wage of a barista working in the cafe, in the original currency. |
+
+### **``` cappuccino_index``.csv ```**
+
+| **variable** | **class** | **description** |
+|------------------|------------------|-----------------------------------|
+| country | character | Name of country for which cappuccino index was calculated. |
+| index | double | The cappuccino index: the time in minutes a barista needs to work to afford a small cappuccino in their country. |
+| n | integer | Number of cafes that were included in the calculation of the index. |
+| minutes | double | The number of whole minutes in index. |
+| seconds | double | The remaining number of seconds in index. |
+| index_as_time | character | Index formatted as minutes and seconds, i.e., MM:SS. |
+
+It takes **about 3 minutes per cappuccino from order to handoff** (measured by me when I order my morning cappuccino)
+
+Looking at Bulgaria. Only 1 out of 6 records was for a cafe not in an urban area so leaving only urban.
+
+```{r}
+
+(bg_cafe <-
+    cafe |>
+    filter(country == "Bulgaria" & urban == TRUE) |>
+    select(city, price, hourly_wage) |>
+    group_by(city) |>
+    summarise(
+      avg_price = mean(price),
+      avg_hourly_wage = mean(hourly_wage),
+      .groups = "drop"
+    )
+)
+```
+
+```{r}
+
+cappuccino_time_min <- 3
+
+(cappuccino_affordability <- 
+  bg_cafe |>
+  mutate(
+    wage_per_cappuccino = avg_hourly_wage * (cappuccino_time_min / 60),
+    cappuccinos_needed = avg_price / wage_per_cappuccino
+  ) |>
+  arrange(desc(cappuccinos_needed))
+)
+```
+
+```{r}
+
+(coffee_data <- 
+  cappuccino_affordability |>
+  mutate(
+    cups = round(cappuccinos_needed),
+    city_position = row_number()
+  )
+)
+
+# Three cups per row, centred on each city's x position
+(coffee_icons <- coffee_data |>
+  uncount(cups, .id = "cup_number") |>
+  mutate(
+    x = city_position + ((cup_number - 1) %% 3 - 1) * 0.20,
+    y = (cup_number - 1) %/% 3 + 0.5
+  )
+)
+```
+
+```{r}
+
+cappuccino_plot <-
+  ggplot(
+  coffee_icons, 
+  aes(x, y)
+) +
+  geom_image(
+    image = "images/coffee-cup.png",
+    size = 0.09,
+    by = "height"
+  ) +
+  scale_x_continuous(
+    breaks = coffee_data$city_position,
+    labels = coffee_data$city,
+    limits = c(0.5, nrow(coffee_data) + 0.5),
+    expand = c(0, 0)
+  ) +
+  scale_y_continuous(
+    limits = c(0, 7),
+    expand = c(0, 0)
+  ) +
+  labs(
+    title = str_wrap(
+      "How many small cappuccinos does a barista in Bulgaria need to make in order to afford one*"
+    ),
+    caption = paste0(
+      "*Data for Bulgaria is represented by 5 urban cafes. \n\n",
+      "**On average it takes about 3 minutes per cappuccino from order to handoff - personal measurement. \n\n",
+      "Source: The Cappuccino Index by James Hoffmann, ",
+      "data curated by Filip Reierson | Viz: Veneta Karamfilova"
+    )
+  ) +
+  theme_void(base_size = 14) +
+  theme(
+    plot.background = element_rect(fill = "white", colour = NA),
+    axis.text.x = element_text(
+      colour = "#422820",
+      margin = margin(t = 10)
+    ),
+    plot.title = element_text(face = "bold", size = 22),
+    plot.caption = element_text(
+      colour = "gray50",
+      size = 10,
+      hjust = 0,
+      vjust = -10,
+      margin = margin(t = 10)
+    ),
+    plot.margin = margin(20, 20, 40, 20)
+  )
+```
+

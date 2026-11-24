@@ -116,7 +116,7 @@ cappuccino_plot <-
   aes(x, y)
 ) +
   geom_image(
-    image = "images/coffee-cup.png",
+    image = "2026/images/coffee-cup.png",
     size = 0.09,
     by = "height"
   ) +

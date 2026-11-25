@@ -32,7 +32,7 @@ cappuccino_index <-
 ### **`cafe.csv`**
 
 | **variable** | **class** | **description** |
-|-------------------|-------------------|----------------------------------|
+|-----------------|-------------|------------------------------------------|
 | country | character | The country of the cafe. |
 | city | character | The city of the cafe. |
 | urban | logical | Whether the cafe is in an urban area. |
@@ -44,10 +44,10 @@ cappuccino_index <-
 | price | double | The price of a small cappuccino from the cafe, in the original currency. |
 | hourly_wage | double | The hourly wage of a barista working in the cafe, in the original currency. |
 
-### **``` cappuccino_index``.csv ```**
+### **`cappuccino_index.csv`**
 
 | **variable** | **class** | **description** |
-|-------------------|-------------------|----------------------------------|
+|---------------|-------------|---------------------------------------------|
 | country | character | Name of country for which cappuccino index was calculated. |
 | index | double | The cappuccino index: the time in minutes a barista needs to work to afford a small cappuccino in their country. |
 | n | integer | Number of cafes that were included in the calculation of the index. |
@@ -116,7 +116,7 @@ cappuccino_plot <-
   aes(x, y)
 ) +
   geom_image(
-    image = "2026/images/coffee-cup.png",
+    image = "images/coffee-cup.png",
     size = 0.09,
     by = "height"
   ) +

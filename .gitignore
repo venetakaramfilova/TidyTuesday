@@ -1,0 +1,13 @@
+# R session and RStudio state
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+
+# Local environment variables and credentials
+.Renviron
+.env
+
+# Data and reference materials
+main/**/reference/
+main/**/images/

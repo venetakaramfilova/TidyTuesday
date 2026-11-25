@@ -3,11 +3,12 @@
 .RData
 .Ruserdata
 .Rproj.user/
+*.Rproj
 
 # Local environment variables and credentials
 .Renviron
 .env
 
 # Data and reference materials
-main/**/reference/
-main/**/images/
+**/reference/
+**/images/

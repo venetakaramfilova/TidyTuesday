@@ -4,7 +4,7 @@ format: html
 editor: visual
 ---
 
-Libraries
+### Libraries
 
 ```{r}
 #| label: load-packages
@@ -12,12 +12,18 @@ Libraries
 
 library(tidyverse)
 library(ggimage)
+library(fontawesome)
 ```
 
 ### This dataset is part of the weekly [#TidyTuesday](https://github.com/rfordatascience/tidytuesday/blob/main/data/2026/2026-09-08/readme.md).
 
+### [Coffee image](https://fontawesome.com/icons/classic/solid/mug-hot)
+
+### [Color palettes](https://www.canva.com/colors/color-palettes/)
+
 ```{r}
 #| label: download-data
+#| message: false
 
 cafe <- 
   read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2026/2026-09-08/cafe.csv')
@@ -27,12 +33,12 @@ cappuccino_index <-
 
 ```
 
-## **Data Dictionary**
+### **Data Dictionary**
 
-### **`cafe.csv`**
+#### **`cafe.csv`**
 
 | **variable** | **class** | **description** |
-|-----------------|-------------|------------------------------------------|
+|-----------------|---------------|----------------------------------------|
 | country | character | The country of the cafe. |
 | city | character | The city of the cafe. |
 | urban | logical | Whether the cafe is in an urban area. |
@@ -44,10 +50,10 @@ cappuccino_index <-
 | price | double | The price of a small cappuccino from the cafe, in the original currency. |
 | hourly_wage | double | The hourly wage of a barista working in the cafe, in the original currency. |
 
-### **`cappuccino_index.csv`**
+#### **`cappuccino_index.csv`**
 
 | **variable** | **class** | **description** |
-|---------------|-------------|---------------------------------------------|
+|-----------------|----------------|----------------------------------------|
 | country | character | Name of country for which cappuccino index was calculated. |
 | index | double | The cappuccino index: the time in minutes a barista needs to work to afford a small cappuccino in their country. |
 | n | integer | Number of cafes that were included in the calculation of the index. |
@@ -55,11 +61,12 @@ cappuccino_index <-
 | seconds | double | The remaining number of seconds in index. |
 | index_as_time | character | Index formatted as minutes and seconds, i.e., MM:SS. |
 
-It takes **about 3 minutes per cappuccino from order to handoff** (measured by me when I order my morning cappuccino)
+It takes **about 3 minutes per cappuccino from order to hand-off** (measured by me when I order my morning cappuccino).
 
 Looking at Bulgaria. Only 1 out of 6 records was for a cafe not in an urban area so leaving only urban.
 
 ```{r}
+#| label: prepare-bulgaria-cafe-data
 
 (bg_cafe <-
     cafe |>
@@ -75,6 +82,7 @@ Looking at Bulgaria. Only 1 out of 6 records was for a cafe not in an urban area
 ```
 
 ```{r}
+#| label: calculate-cappuccinos-needed
 
 cappuccino_time_min <- 3
 
@@ -89,6 +97,7 @@ cappuccino_time_min <- 3
 ```
 
 ```{r}
+#| label: city-position
 
 (coffee_data <- 
   cappuccino_affordability |>
@@ -97,9 +106,14 @@ cappuccino_time_min <- 3
     city_position = row_number()
   )
 )
+```
 
-# Three cups per row, centred on each city's x position
-(coffee_icons <- coffee_data |>
+```{r}
+#| label: cups-position
+
+# Three cups per row, centered on each city's x position
+(coffee_icons <- 
+  coffee_data |>
   uncount(cups, .id = "cup_number") |>
   mutate(
     x = city_position + ((cup_number - 1) %% 3 - 1) * 0.20,
@@ -109,6 +123,19 @@ cappuccino_time_min <- 3
 ```
 
 ```{r}
+#| label: cofee-image
+
+fontawesome::fa_png(
+  name = "mug-hot",
+  file = "images/mug-hot.png",
+  fill = "#5C341E",
+  prefer_type = "solid",
+  height = 200
+)
+```
+
+```{r}
+#| label: plot
 
 cappuccino_plot <-
   ggplot(
@@ -116,7 +143,7 @@ cappuccino_plot <-
   aes(x, y)
 ) +
   geom_image(
-    image = "images/coffee-cup.png",
+    image = "images/mug-hot.png",
     size = 0.09,
     by = "height"
   ) +
@@ -136,19 +163,26 @@ cappuccino_plot <-
     ),
     caption = paste0(
       "*Data for Bulgaria is represented by 5 urban cafes. \n\n",
-      "**On average it takes about 3 minutes per cappuccino from order to handoff - personal measurement. \n\n",
+      "**On average it takes about 3 minutes per cappuccino from order to hand off - personal measurement. \n\n",
       "Source: The Cappuccino Index by James Hoffmann, ",
       "data curated by Filip Reierson | Viz: Veneta Karamfilova"
     )
   ) +
-  theme_void(base_size = 14) +
+  theme_void(base_size = 14) + 
   theme(
-    plot.background = element_rect(fill = "white", colour = NA),
+    plot.background = element_rect(
+      fill = "#EFE9E1", 
+      colour = NA
+    ),
     axis.text.x = element_text(
-      colour = "#422820",
+      colour = "#2F180B",
       margin = margin(t = 10)
     ),
-    plot.title = element_text(face = "bold", size = 22),
+    plot.title = element_text(
+      face = "bold", 
+      color = "#2F180B", 
+      size = 22
+    ),
     plot.caption = element_text(
       colour = "gray50",
       size = 10,
